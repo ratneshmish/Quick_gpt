@@ -8,16 +8,18 @@ import { Route,Routes, useLocation } from 'react-router-dom'
 import { assets } from './assets/assets'
 import './assets/prism.css'
 import Loading from './pages/Loading'
+import {Toaster} from 'react-hot-toast'
 import { useAppcontext } from './context/AppContext'
 
 const App = () => {
-  const {user}=useAppcontext();
+  const {user,loadinguser}=useAppcontext();
     const [isMenu,SetisMenu]=useState(false);
     const {pathname}=useLocation();
     // console.log(pathname);
-    if(pathname==='/location')return <Loading/>
-  return (
+    if(pathname==='/location'||loadinguser)return <Loading/>
+  return ( 
     <>
+    <Toaster/>
   {
     !isMenu && <img src={assets.menu_icon} className='absolute top-3 left-3 w-8 h-8 cursor-pointer md:hidden not-dark:invert' onClick={()=>SetisMenu(true)}/>
   }

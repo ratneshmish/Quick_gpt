@@ -4,8 +4,9 @@ import { assets } from '../assets/assets';
 import moment from 'moment';
 import { useRef } from 'react';
 import Messages from './Messages';
+import toast from 'react-hot-toast';
 const ChatBox = () => {
-  const {selectedChats,theme}=useAppcontext();
+  const {selectedChats,theme,axios,user,token,setuser}=useAppcontext();
   const [messages,setMessages]=useState([]);
   const [loading,setLoading]=useState(false);
   const [prompt,setPrompt]=useState([]);
@@ -13,7 +14,34 @@ const ChatBox = () => {
   const [isPublished,setIsPublished]=useState(false);
   const containerRef=useRef(null);
   const onSubmit=async (e)=>{
+    try{
     e.preventDefault();
+    if(!user) return toast('Login to send message');
+    setLoading(true);
+    const promptcopy=prompt;
+    setPrompt('');
+    setMessages(prev=>[...prev,{role:'user',content:prompt,timeStamp:Date.now(),isImage:false}])
+    const {data}=await axios.post(`/api/message/${mode}`,{chatId:selectedChats._id,prompt,isPublished},{headers:{Authorization:token}})
+    if(data.success){
+      setMessages(prev=>[...prev,data.reply])
+      
+      if(mode==='image'){
+        setuser(prev=>({...prev,credits:prev.credits-2}))
+      }
+      else{
+         setuser(prev=>({...prev,credits:prev.credits-1}))
+      }
+    }
+    else{
+      toast.error(data.message);
+      setPrompt(promptcopy);
+    }
+    }catch(err){
+toast.error(err.message);
+    }finally{
+      setPrompt('');
+      setLoading(false);
+    }
   }
   useEffect(()=>{
 if(selectedChats){

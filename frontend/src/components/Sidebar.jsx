@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useAppcontext } from "../context/AppContext";
 import { assets } from "../assets/assets";
 import moment from "moment";
+import toast from "react-hot-toast";
 
 const Sidebar = ({isMenu,SetisMenu}) => {
   const {
@@ -11,9 +12,35 @@ const Sidebar = ({isMenu,SetisMenu}) => {
     selectedChats,
     setSelectedChats,
     theme,
-    setTheme,
+    setTheme,createchat,axios,token,setToken,fetchuserchats,setchats
   } = useAppcontext();
   const [search, setsearch] = useState("");
+const logout=()=>{
+  localStorage.removeItem('token');
+  setToken(null);
+  toast.success("Logged out successfully");
+}
+
+const deletechats = async (e, chatId) => {
+  try {
+    e.stopPropagation();
+    const confirmDelete = window.confirm('Are you sure you want to delete this chat?');
+    if (!confirmDelete) return;
+
+    const { data } = await axios.delete('/api/chats/remove', {
+      data: { chatId },
+      headers: { Authorization: token }
+    });
+
+    if (data.success) {
+      setchats(prev => prev.filter(chat => chat._id !== chatId));
+      await fetchuserchats();
+      toast.success(data.message);
+    }
+  } catch (err) {
+    toast.error(err.response?.data?.message || err.message);
+  }
+};
 
   return (
 <div
@@ -32,7 +59,7 @@ const Sidebar = ({isMenu,SetisMenu}) => {
       />
 
       {/* New Chat Button */}
-      <button
+      <button onClick={createchat}
         className="flex justify-center items-center w-full py-2 mt-10 
         text-white bg-gradient-to-r from-[#A456F7] to-[#3D81F6] 
         text-sm rounded-md cursor-pointer"
@@ -90,7 +117,7 @@ const Sidebar = ({isMenu,SetisMenu}) => {
                   {moment(chat.updatedAt).fromNow()}
                 </p>
               </div>
-              <img
+              <img onClick={e=>toast.promise(deletechats(e,chat._id),{loading:'deleting...'})}
                 src={assets.bin_icon}
                 className="hidden group-hover:block w-4 cursor-pointer not-dark:invert"
                 alt="delete"
@@ -170,7 +197,7 @@ const Sidebar = ({isMenu,SetisMenu}) => {
           {user ? user.name : "Login your account"}
         </p>
         {user && (
-          <img
+          <img onClick={logout}
             src={assets.logout_icon}
             className="h-5 cursor-pointer hidden not-dark:invert group-hover:block"
             alt="logout"
